@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<eSocial xmlns="http://www.esocial.gov.br/schema/evt/evtTabCargo/v_S_01_00_00">
+  <evtTabCargo Id="ID1234567890">
+    <ideEvento>
+      <indRetif>1</indRetif>
+      <tpAmb>1</tpAmb>
+      <procEmi>1</procEmi>
+      <verProc>1.0</verProc>
+    </ideEvento>
+    <ideEmpregador>
+      <tpInsc>1</tpInsc>
+      <nrInsc>12345678901234</nrInsc>
+    </ideEmpregador>
+    <infoCargo>
+      <inclusao>
+        <ideCargo>
+          <codCargo>ANALISTA01</codCargo>
+          <iniValid>2025-01</iniValid>
+        </ideCargo>
+        <dadosCargo>
+          <nmCargo>Analista de Sistemas</nmCargo>
+          <codCBO>212405</codCBO>
+          <cargoPublico>
+            <acumCargo>S</acumCargo>
+            <contagemEsp>N</contagemEsp>
+            <dedicExcl>S</dedicExcl>
+            <leiCargo>Lei 12345/2020</leiCargo>
+            <dtLeiCargo>2020-12-01</dtLeiCargo>
+            <sitCargo>1</sitCargo>
+          </cargoPublico>
+        </dadosCargo>
+      </inclusao>
+      <inclusao>
+        <ideCargo>
+          <codCargo>GERENTE01</codCargo>
+          <iniValid>2025-01</iniValid>
+        </ideCargo>
+        <dadosCargo>
+          <nmCargo>Gerente de Projetos</nmCargo>
+          <codCBO>123456</codCBO>
+          <cargoPublico>
+            <acumCargo>N</acumCargo>
+            <contagemEsp>N</contagemEsp>
+            <dedicExcl>S</dedicExcl>
+            <leiCargo>Lei 12345/2020</leiCargo>
+            <dtLeiCargo>2020-12-01</dtLeiCargo>
+            <sitCargo>1</sitCargo>
+          </cargoPublico>
+        </dadosCargo>
+      </inclusao>
+      <inclusao>
+        <ideCargo>
+          <codCargo>DESENVOLVEDOR01</codCargo>
+          <iniValid>2025-01</iniValid>
+        </ideCargo>
+        <dadosCargo>
+          <nmCargo>Desenvolvedor Full Stack</nmCargo>
+          <codCBO>212405</codCBO>
+          <cargoPublico>
+            <acumCargo>S</acumCargo>
+            <contagemEsp>N</contagemEsp>
+            <dedicExcl>N</dedicExcl>
+            <leiCargo>Lei 12345/2020</leiCargo>
+            <dtLeiCargo>2020-12-01</dtLeiCargo>
+            <sitCargo>1</sitCargo>
+          </cargoPublico>
+        </dadosCargo>
+      </inclusao>
+    </infoCargo>
+  </evtTabCargo>
+</eSocial> 

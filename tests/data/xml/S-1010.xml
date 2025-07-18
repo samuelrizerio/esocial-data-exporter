@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<eSocial xmlns="http://www.esocial.gov.br/schema/evt/evtTabRubrica/v_S_01_00_00">
+    <evtTabRubrica Id="ID1234567890">
+        <ideEvento>
+            <tpAmb>1</tpAmb>
+            <procEmi>1</procEmi>
+            <verProc>1.0</verProc>
+        </ideEvento>
+        <ideEmpregador>
+            <tpInsc>1</tpInsc>
+            <nrInsc>12345678901234</nrInsc>
+        </ideEmpregador>
+        <infoRubrica>
+            <inclusao>
+                <ideRubrica>
+                    <codRubr>1001</codRubr>
+                    <iniValid>2025-01</iniValid>
+                </ideRubrica>
+                <dadosRubrica>
+                    <dscRubr>Salário Base</dscRubr>
+                    <tpRubr>1</tpRubr>
+                    <codIncCP>00</codIncCP>
+                    <codIncIRRF>00</codIncIRRF>
+                    <codIncFGTS>00</codIncFGTS>
+                </dadosRubrica>
+            </inclusao>
+        </infoRubrica>
+    </evtTabRubrica>
+</eSocial>

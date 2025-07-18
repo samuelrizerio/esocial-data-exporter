@@ -1,0 +1,182 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<eSocial xmlns="http://www.esocial.gov.br/schema/evt/evtRemun/v_S_01_00_00">
+    <evtRemun Id="ID1234567890">
+        <ideEvento>
+            <indRetif>1</indRetif>
+            <tpAmb>1</tpAmb>
+            <procEmi>1</procEmi>
+            <verProc>1.0</verProc>
+        </ideEvento>
+        <ideEmpregador>
+            <tpInsc>1</tpInsc>
+            <nrInsc>12345678901234</nrInsc>
+        </ideEmpregador>
+        <ideTrabalhador>
+            <cpfTrab>12345678901</cpfTrab>
+            <nisTrab>12345678901</nisTrab>
+        </ideTrabalhador>
+        <dmDev>
+            <ideDmDev>1</ideDmDev>
+            <codCateg>101</codCateg>
+            <nrAfast>1</nrAfast>
+            <dtTermAfast>2025-06-30</dtTermAfast>
+            <dtIniAfast>2025-06-01</dtIniAfast>
+            <codMotAfast>01</codMotAfast>
+            <infoPerApur>
+                <ideEstab>
+                    <tpInsc>1</tpInsc>
+                    <nrInsc>12345678901234</nrInsc>
+                    <remunPerApur>
+                        <matricula>0001</matricula>
+                        <codCargo>ANALISTA01</codCargo>
+                        <codFuncao>FUNCAO01</codFuncao>
+                        <codCateg>101</codCateg>
+                        <vrSalFx>5000.00</vrSalFx>
+                        <undSalFixo>5</undSalFixo>
+                        <dscSalVar>Descrição salário variável</dscSalVar>
+                        <tpContr>1</tpContr>
+                        <dtTerm>2026-01-15</dtTerm>
+                        <clauAssec>S</clauAssec>
+                        <tpInsc>1</tpInsc>
+                        <nrInsc>12345678901234</nrInsc>
+                        <descComp>Sede da Empresa</descComp>
+                        <qtdHrsSem>44.0</qtdHrsSem>
+                        <tpJornada>1</tpJornada>
+                        <dscTpJorn>Jornada padrão</dscTpJorn>
+                        <tmpParc>0</tmpParc>
+                        <horNoturno>S</horNoturno>
+                        <dscHorNoturno>Horário noturno das 22h às 5h</dscHorNoturno>
+                        <tpInscContrat>1</tpInscContrat>
+                        <nrInscContrat>12345678901234</nrInscContrat>
+                        <tpInscProp>1</tpInscProp>
+                        <nrInscProp>12345678901234</nrInscProp>
+                        <codCargo>ANALISTA01</codCargo>
+                        <codFuncao>FUNCAO01</codFuncao>
+                        <codCateg>101</codCateg>
+                        <codCarreira>CARREIRA01</codCarreira>
+                        <dtIngrCarr>2025-01-15</dtIngrCarr>
+                        <vrSalFx>5000.00</vrSalFx>
+                        <undSalFixo>5</undSalFixo>
+                        <tpContr>1</tpContr>
+                        <dtTerm>2026-01-15</dtTerm>
+                        <clauAssec>S</clauAssec>
+                        <tpInsc>1</tpInsc>
+                        <nrInsc>12345678901234</nrInsc>
+                        <descComp>Sede da Empresa</descComp>
+                        <qtdHrsSem>44.0</qtdHrsSem>
+                        <tpJornada>1</tpJornada>
+                        <dscTpJorn>Jornada padrão</dscTpJorn>
+                        <tmpParc>0</tmpParc>
+                        <horNoturno>S</horNoturno>
+                        <dscHorNoturno>Horário noturno das 22h às 5h</dscHorNoturno>
+                        <tpInscContrat>1</tpInscContrat>
+                        <nrInscContrat>12345678901234</nrInscContrat>
+                        <tpInscProp>1</tpInscProp>
+                        <nrInscProp>12345678901234</nrInscProp>
+                        <itensRemun>
+                            <codRubr>1001</codRubr>
+                            <ideTabRubr>1</ideTabRubr>
+                            <qtdRubr>1.00</qtdRubr>
+                            <vrRubr>5000.00</vrRubr>
+                            <indApurIR>0</indApurIR>
+                        </itensRemun>
+                        <itensRemun>
+                            <codRubr>2001</codRubr>
+                            <ideTabRubr>2</ideTabRubr>
+                            <qtdRubr>1.00</qtdRubr>
+                            <vrRubr>500.00</vrRubr>
+                            <indApurIR>0</indApurIR>
+                        </itensRemun>
+                        <infoSaudeColet>
+                            <detOper>
+                                <cnpjOper>12345678901234</cnpjOper>
+                                <regANS>123456</regANS>
+                                <vrPgTit>100.00</vrPgTit>
+                                <detPlano>
+                                    <tpDep>01</tpDep>
+                                    <cpfDep>98765432109</cpfDep>
+                                    <nmDep>Maria Silva Santos</nmDep>
+                                    <dtNascto>2015-08-20</dtNascto>
+                                    <vlrPgDep>50.00</vlrPgDep>
+                                </detPlano>
+                            </detOper>
+                        </infoSaudeColet>
+                        <infoAgNoc>
+                            <codAgNoc>01</codAgNoc>
+                            <dscAgNoc>Agente nocivo químico</dscAgNoc>
+                            <tpAval>1</tpAval>
+                            <intConc>1</intConc>
+                            <limTol>1</limTol>
+                            <unMed>1</unMed>
+                            <tecMedicao>1</tecMedicao>
+                            <insalubridade>
+                                <grauExp>1</grauExp>
+                            </insalubridade>
+                            <periculosidade>
+                                <fatorRisco>1</fatorRisco>
+                            </periculosidade>
+                            <aposentEsp>
+                                <tpAposent>1</tpAposent>
+                            </aposentEsp>
+                        </infoAgNoc>
+                        <infoSimples>
+                            <indSimples>1</indSimples>
+                        </infoSimples>
+                    </remunPerApur>
+                </ideEstab>
+            </infoPerApur>
+            <infoPerAnt>
+                <remunOrgSuc>
+                    <codCateg>101</codCateg>
+                    <vrSalFx>4500.00</vrSalFx>
+                    <undSalFixo>5</undSalFixo>
+                    <dscSalVar>Descrição salário variável anterior</dscSalVar>
+                    <tpContr>1</tpContr>
+                    <dtTerm>2025-01-14</dtTerm>
+                    <clauAssec>S</clauAssec>
+                    <tpInsc>1</tpInsc>
+                    <nrInsc>12345678901234</nrInsc>
+                    <descComp>Sede da Empresa Anterior</descComp>
+                    <qtdHrsSem>40.0</qtdHrsSem>
+                    <tpJornada>1</tpJornada>
+                    <dscTpJorn>Jornada anterior</dscTpJorn>
+                    <tmpParc>0</tmpParc>
+                    <horNoturno>N</horNoturno>
+                    <tpInscContrat>1</tpInscContrat>
+                    <nrInscContrat>12345678901234</nrInscContrat>
+                    <tpInscProp>1</tpInscProp>
+                    <nrInscProp>12345678901234</nrInscProp>
+                    <codCargo>ANALISTA01</codCargo>
+                    <codFuncao>FUNCAO01</codFuncao>
+                    <codCateg>101</codCateg>
+                    <codCarreira>CARREIRA01</codCarreira>
+                    <dtIngrCarr>2024-01-15</dtIngrCarr>
+                    <vrSalFx>4500.00</vrSalFx>
+                    <undSalFixo>5</undSalFixo>
+                    <tpContr>1</tpContr>
+                    <dtTerm>2025-01-14</dtTerm>
+                    <clauAssec>S</clauAssec>
+                    <tpInsc>1</tpInsc>
+                    <nrInsc>12345678901234</nrInsc>
+                    <descComp>Sede da Empresa Anterior</descComp>
+                    <qtdHrsSem>40.0</qtdHrsSem>
+                    <tpJornada>1</tpJornada>
+                    <dscTpJorn>Jornada anterior</dscTpJorn>
+                    <tmpParc>0</tmpParc>
+                    <horNoturno>N</horNoturno>
+                    <tpInscContrat>1</tpInscContrat>
+                    <nrInscContrat>12345678901234</nrInscContrat>
+                    <tpInscProp>1</tpInscProp>
+                    <nrInscProp>12345678901234</nrInscProp>
+                    <itensRemun>
+                        <codRubr>1001</codRubr>
+                        <ideTabRubr>1</ideTabRubr>
+                        <qtdRubr>1.00</qtdRubr>
+                        <vrRubr>4500.00</vrRubr>
+                        <indApurIR>0</indApurIR>
+                    </itensRemun>
+                </remunOrgSuc>
+            </infoPerAnt>
+        </dmDev>
+    </evtRemun>
+</eSocial> 

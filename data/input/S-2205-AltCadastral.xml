@@ -1,0 +1,143 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<eSocial xmlns="http://www.esocial.gov.br/schema/evt/evtAltCadastral/v_S_01_00_00">
+    <evtAltCadastral Id="ID1234567890">
+        <ideEvento>
+            <indRetif>1</indRetif>
+            <tpAmb>1</tpAmb>
+            <procEmi>1</procEmi>
+            <verProc>1.0</verProc>
+        </ideEvento>
+        <ideEmpregador>
+            <tpInsc>1</tpInsc>
+            <nrInsc>12345678901234</nrInsc>
+        </ideEmpregador>
+        <ideTrabalhador>
+            <cpfTrab>12345678901</cpfTrab>
+            <matricula>0001</matricula>
+        </ideTrabalhador>
+        <alteracao>
+            <dtAlteracao>2025-07-15</dtAlteracao>
+            <dadosTrabalhador>
+                <nmTrab>José Teste Alterado</nmTrab>
+                <sexo>M</sexo>
+                <racaCor>1</racaCor>
+                <estCiv>1</estCiv>
+                <grauInstr>11</grauInstr>
+                <nascimento>
+                    <dtNascto>1991-01-07</dtNascto>
+                    <paisNascto>010</paisNascto>
+                    <paisNac>010</paisNac>
+                </nascimento>
+                <endereco>
+                    <brasil>
+                        <tpLograd>R</tpLograd>
+                        <dscLograd>Rua das Alterações</dscLograd>
+                        <nrLograd>1500</nrLograd>
+                        <bairro>Centro Novo</bairro>
+                        <cep>12345678</cep>
+                        <codMunic>3550308</codMunic>
+                        <uf>SP</uf>
+                    </brasil>
+                </endereco>
+                <contato>
+                    <fonePrinc>11987654321</fonePrinc>
+                    <emailPrinc>jose.alterado@empresa.com</emailPrinc>
+                </contato>
+            </dadosTrabalhador>
+        </alteracao>
+    </evtAltCadastral>
+
+    <evtAltCadastral Id="ID2234567890">
+        <ideEvento>
+            <indRetif>1</indRetif>
+            <tpAmb>1</tpAmb>
+            <procEmi>1</procEmi>
+            <verProc>1.0</verProc>
+        </ideEvento>
+        <ideEmpregador>
+            <tpInsc>1</tpInsc>
+            <nrInsc>22345678901234</nrInsc>
+        </ideEmpregador>
+        <ideTrabalhador>
+            <cpfTrab>22345678901</cpfTrab>
+            <matricula>0002</matricula>
+        </ideTrabalhador>
+        <alteracao>
+            <dtAlteracao>2025-07-16</dtAlteracao>
+            <dadosTrabalhador>
+                <nmTrab>Maria Teste Alterada</nmTrab>
+                <sexo>F</sexo>
+                <racaCor>2</racaCor>
+                <estCiv>2</estCiv>
+                <grauInstr>12</grauInstr>
+                <nascimento>
+                    <dtNascto>1992-02-08</dtNascto>
+                    <paisNascto>010</paisNascto>
+                    <paisNac>010</paisNac>
+                </nascimento>
+                <endereco>
+                    <brasil>
+                        <tpLograd>A</tpLograd>
+                        <dscLograd>Avenida das Mudanças</dscLograd>
+                        <nrLograd>2500</nrLograd>
+                        <bairro>Jardim Novo</bairro>
+                        <cep>87654321</cep>
+                        <codMunic>3550309</codMunic>
+                        <uf>RJ</uf>
+                    </brasil>
+                </endereco>
+                <contato>
+                    <fonePrinc>21987654321</fonePrinc>
+                    <emailPrinc>maria.alterada@empresa.com</emailPrinc>
+                </contato>
+            </dadosTrabalhador>
+        </alteracao>
+    </evtAltCadastral>
+
+    <evtAltCadastral Id="ID3234567890">
+        <ideEvento>
+            <indRetif>1</indRetif>
+            <tpAmb>1</tpAmb>
+            <procEmi>1</procEmi>
+            <verProc>1.0</verProc>
+        </ideEvento>
+        <ideEmpregador>
+            <tpInsc>1</tpInsc>
+            <nrInsc>32345678901234</nrInsc>
+        </ideEmpregador>
+        <ideTrabalhador>
+            <cpfTrab>32345678901</cpfTrab>
+            <matricula>0003</matricula>
+        </ideTrabalhador>
+        <alteracao>
+            <dtAlteracao>2025-07-17</dtAlteracao>
+            <dadosTrabalhador>
+                <nmTrab>Carlos Teste Alterado</nmTrab>
+                <sexo>M</sexo>
+                <racaCor>3</racaCor>
+                <estCiv>1</estCiv>
+                <grauInstr>13</grauInstr>
+                <nascimento>
+                    <dtNascto>1993-03-09</dtNascto>
+                    <paisNascto>010</paisNascto>
+                    <paisNac>010</paisNac>
+                </nascimento>
+                <endereco>
+                    <brasil>
+                        <tpLograd>V</tpLograd>
+                        <dscLograd>Vila das Modificações</dscLograd>
+                        <nrLograd>3500</nrLograd>
+                        <bairro>Centro</bairro>
+                        <cep>11223344</cep>
+                        <codMunic>3550310</codMunic>
+                        <uf>MG</uf>
+                    </brasil>
+                </endereco>
+                <contato>
+                    <fonePrinc>31987654321</fonePrinc>
+                    <emailPrinc>carlos.alterado@empresa.com</emailPrinc>
+                </contato>
+            </dadosTrabalhador>
+        </alteracao>
+    </evtAltCadastral>
+</eSocial> 

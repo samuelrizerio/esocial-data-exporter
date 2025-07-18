@@ -1,0 +1,1377 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+Interface gráfica para o processador de eSocial XML
+Permite processamento de arquivos XML eSocial com interface amigável
+"""
+
+import os
+import sys
+import io
+import datetime
+import threading
+import tkinter as tk
+from tkinter import filedialog, ttk, messagebox, scrolledtext
+import shutil
+import logging
+import subprocess
+from pathlib import Path
+import queue
+
+# Importação de módulos do eSocial quando executando como app
+try:
+    # Tenta usar o sistema de log aprimorado se disponível
+    from src.utils.logger_config import configurar_logger
+    LOGGER_AVANCADO_DISPONIVEL = True
+except ImportError:
+    LOGGER_AVANCADO_DISPONIVEL = False
+
+# Determina o diretório base da aplicação
+if getattr(sys, 'frozen', False):
+    # Executando como executável compilado
+    BASE_DIR = Path(os.path.dirname(sys.executable))
+else:
+    # Executando como script
+    BASE_DIR = Path(os.path.dirname(os.path.abspath(__file__)))
+
+# Configuração moderna usando o ConfiguradorPath centralizado
+sys.path.insert(0, str(BASE_DIR / "src"))
+
+# Usar configurador centralizado quando disponível
+try:
+    from src.utils.configurador_path import ConfiguradorPath
+    configurador = ConfiguradorPath(BASE_DIR)
+    configurador.configurar_paths_basicos()
+    print(f"✅ ConfiguradorPath ativado - Projeto: {configurador.obter_diretorio_raiz()}")
+except ImportError:
+    # Fallback para compatibilidade
+    sys.path.insert(0, str(BASE_DIR))
+    print("⚠️  Usando configuração de paths tradicional")
+
+# Configuração de caminhos padrão relativos ao executável ou script
+DEFAULT_PATHS = {
+    'INPUT_DIR': BASE_DIR / 'data' / 'input',
+    'OUTPUT_DIR': BASE_DIR / 'data' / 'output',
+    'TEMPLATES_DIR': BASE_DIR / 'data' / 'templates',
+    'DATABASE_DIR': BASE_DIR / 'data' / 'db',
+    'LOG_DIR': BASE_DIR / 'logs'
+}
+
+# Criar diretórios padrão se não existirem
+for path in DEFAULT_PATHS.values():
+    path.mkdir(parents=True, exist_ok=True)
+
+# Configuração do arquivo de log
+log_file = DEFAULT_PATHS['LOG_DIR'] / f"esocial_gui_{datetime.datetime.now().strftime('%Y%m%d_%H%M%S')}.log"
+
+# Níveis de log
+LOG_LEVELS = {
+    "DEBUG": 10,
+    "INFO": 20,
+    "WARNING": 30,
+    "ERROR": 40
+}
+
+# Classe para redirecionar saídas para widget Text e arquivo de log
+class RedirecionadorTextoSimples(io.TextIOBase):
+    """Redirecionador simplificado que mostra mensagens amigáveis para o usuário"""
+    
+    def __init__(self, text_widget, log_file=None):
+        self.text_widget = text_widget
+        self.log_file = log_file
+        self.queue = queue.Queue()
+        self.updating = False
+        
+    def _simplificar_mensagem(self, mensagem):
+        """Converte mensagens técnicas em mensagens amigáveis para o usuário"""
+        if not mensagem or not isinstance(mensagem, str):
+            return None
+            
+        lower_msg = mensagem.lower().strip()
+        
+        # Ignorar mensagens muito técnicas ou de debug
+        if any(termo in lower_msg for termo in ['debug', 'traceback', 'exception', '__main__', 'line ', 'file "/', 'sqlite', 'sql', 'conn ', 'cursor']):
+            return None
+        
+        # Mensagens de erro
+        if "erro" in lower_msg or "error" in lower_msg:
+            if "banco" in lower_msg or "database" in lower_msg:
+                return "❌ Problema no banco de dados - verifique os arquivos"
+            elif "arquivo" in lower_msg or "file" in lower_msg:
+                return "❌ Problema em um arquivo - verifique se está correto"
+            elif "xml" in lower_msg:
+                return "❌ Problema no arquivo XML - verifique se está válido"
+            elif "permissão" in lower_msg or "permission" in lower_msg:
+                return "❌ Sem permissão para acessar arquivos"
+            elif "memória" in lower_msg or "memory" in lower_msg:
+                return "❌ Memória insuficiente para operação"
+            else:
+                return "❌ Ocorreu um problema no processamento"
+        
+        # Mensagens de sucesso/conclusão
+        elif any(palavra in lower_msg for palavra in ["sucesso", "concluído", "finalizado", "completado", "success", "criado com sucesso", "finalizada"]):
+            return "✅ Operação concluída com sucesso"
+        
+        # Mensagens de início de operação
+        elif any(palavra in lower_msg for palavra in ["iniciando", "processando", "carregando", "starting", "começando", "inicia o"]):
+            if "xml" in lower_msg:
+                return "🔄 Processando arquivos XML..."
+            elif "banco" in lower_msg or "database" in lower_msg:
+                return "🔄 Preparando banco de dados..."
+            elif "export" in lower_msg:
+                return "🔄 Preparando exportação de dados..."
+            elif "template" in lower_msg or "modelo" in lower_msg:
+                return "🔄 Preparando modelos de exportação..."
+            else:
+                return "🔄 Iniciando processamento..."
+        
+        # Mensagens de progresso
+        elif any(palavra in lower_msg for palavra in ["inseridos", "inserindo", "registros", "records", "salvando", "dados"]):
+            if "registros" in lower_msg and any(n in lower_msg for n in ["10", "20", "30", "40", "50", "100"]):
+                return "📊 Salvando dados no sistema..."
+            else:
+                return "📊 Salvando informações..."
+        
+        # Mensagens informativas específicas
+        elif "tabela" in lower_msg and ("criada" in lower_msg or "created" in lower_msg):
+            return "📋 Preparando estrutura para armazenar os dados"
+        elif "arquivo" in lower_msg and ("adicionado" in lower_msg or "processado" in lower_msg):
+            return "📄 Arquivo processado com sucesso"
+        elif any(palavra in lower_msg for palavra in ["exportando", "export", "gerando", "csv"]):
+            return "📤 Gerando arquivos de exportação..."
+        elif "conectando" in lower_msg or "connecting" in lower_msg:
+            return "🔗 Conectando ao sistema..."
+        
+        # Mensagens de progresso ou status
+        elif "backup" in lower_msg or "cópia" in lower_msg:
+            return "💾 Criando cópia de segurança..."
+        elif "verificando" in lower_msg or "validando" in lower_msg:
+            return "🔍 Verificando informações..."
+        elif any(palavra in lower_msg for palavra in ["concluído", "completed", "finalizado", "pronto"]):
+            return "✅ Operação finalizada com sucesso!"
+        
+        # Mensagens de aviso
+        elif any(palavra in lower_msg for palavra in ["aviso", "warning", "atenção", "cuidado"]):
+            return "⚠️ Atenção: Verifique as informações"
+        
+        # Mensagens simples e curtas que podem ser mostradas
+        elif len(mensagem.strip()) < 80 and not any(char in mensagem for char in ['[', '{', '(', '<', '>', 'File']):
+            # Remove quebras de linha e espaços extras
+            msg_limpa = ' '.join(mensagem.split())
+            if msg_limpa and len(msg_limpa) > 3:
+                return f"ℹ️ {msg_limpa}"
+        
+        # Outras mensagens técnicas - não mostrar no GUI
+        return None
+        
+    def write(self, string):
+        """Escreve a mensagem no log e exibe versão simplificada no GUI"""
+        if not string or not isinstance(string, str):
+            return
+            
+        # Sempre salvar no log completo (arquivo)
+        if self.log_file:
+            timestamp = datetime.datetime.now().strftime('[%Y-%m-%d %H:%M:%S] ')
+            try:
+                with open(self.log_file, 'a', encoding='utf-8') as log:
+                    log.write(f"{timestamp}{string}")
+                    if not string.endswith('\n'):
+                        log.write('\n')
+            except Exception as e:
+                # Se falhar ao escrever no arquivo, pelo menos mostrar no console
+                print(f"Erro ao escrever no log: {e}")
+        
+        # Simplificar mensagem para o usuário
+        mensagem_simples = self._simplificar_mensagem(string)
+        if mensagem_simples and self.text_widget:
+            try:
+                self.queue.put(mensagem_simples)
+                # Reagendar atualização se não está em andamento
+                if not self.updating and hasattr(self.text_widget, 'after_idle'):
+                    self.text_widget.after_idle(self.update_widget)
+            except Exception as e:
+                # Se falhar no GUI, continuar sem erro
+                print(f"Erro ao atualizar GUI: {e}")
+                
+    def update_widget(self):
+        """Atualiza o widget de texto com mensagens da fila"""
+        if self.updating:
+            return
+            
+        self.updating = True
+        try:
+            while True:
+                try:
+                    mensagem = self.queue.get_nowait()
+                    self.text_widget.config(state=tk.NORMAL)
+                    
+                    # Determinar cor baseada no ícone
+                    if mensagem.startswith('❌'):
+                        tag = "error"
+                    elif mensagem.startswith('⚠️'):
+                        tag = "warning"
+                    elif mensagem.startswith('✅'):
+                        tag = "success"
+                    else:
+                        tag = "info"
+                        
+                    # Adicionar timestamp amigável
+                    timestamp = datetime.datetime.now().strftime('%H:%M:%S')
+                    mensagem_completa = f"[{timestamp}] {mensagem}\n"
+                    
+                    self.text_widget.insert(tk.END, mensagem_completa, tag)
+                    self.text_widget.see(tk.END)  # Rolagem automática
+                    self.text_widget.config(state=tk.DISABLED)
+                except queue.Empty:
+                    break
+        finally:
+            self.updating = False
+            # Reagendar se ainda há mensagens
+            if not self.queue.empty():
+                self.text_widget.after(100, self.update_widget)
+        
+    def flush(self):
+        """Flush para compatibilidade com sys.stdout/stderr"""
+        pass
+        
+    def isatty(self):
+        """Retorna False para compatibilidade com sys.stdout/stderr"""
+        return False
+
+
+class EsocialMigrationGUI:
+    """Interface gráfica para o processador de eSocial XML"""
+    
+    def __init__(self, root):
+        self.root = root
+        self.root.title("Exportador de XMLs do eSocial")
+        
+        # Configuração de tamanho dinâmico
+        self._configurar_tamanho_tela()
+        
+        # Configuração do grid principal
+        self.root.columnconfigure(0, weight=1)
+        self.root.rowconfigure(0, weight=0)  # Configurações
+        self.root.rowconfigure(1, weight=1)  # Área principal
+        self.root.rowconfigure(2, weight=0)  # Barra de status
+
+        # Controle de estado da aplicação
+        # Estados possíveis: "initial", "processing", "processed", "exporting", "exported"
+        self.current_state = "initial"
+
+        # Configurações (caminhos)
+        self.config_frame = ttk.LabelFrame(self.root, text="Configurações")
+        self.config_frame.grid(row=0, column=0, sticky="new", padx=10, pady=5)
+        self.setup_config_frame()
+        
+        # Container principal (arquivos e log)
+        self.main_container = ttk.PanedWindow(self.root, orient=tk.HORIZONTAL)
+        self.main_container.grid(row=1, column=0, sticky="nsew", padx=10, pady=5)
+        
+        # Frame para arquivos
+        self.file_frame = ttk.LabelFrame(self.main_container, text="Arquivos XML")
+        self.main_container.add(self.file_frame, weight=1)
+        self.setup_file_frame()
+        
+        # Frame para log
+        self.log_frame = ttk.LabelFrame(self.main_container, text="Logs de Processamentos")
+        self.main_container.add(self.log_frame, weight=2)
+        self.setup_log_frame()
+        
+        # Barra de ações
+        self.actions_frame = ttk.Frame(self.root)
+        self.actions_frame.grid(row=2, column=0, sticky="ew", padx=10, pady=5)
+        self.setup_actions_frame()
+        
+        # Barra de status
+        self.status_var = tk.StringVar(value="Pronto")
+        self.status_bar = ttk.Label(self.root, textvariable=self.status_var, relief=tk.SUNKEN, anchor=tk.W)
+        self.status_bar.grid(row=3, column=0, sticky="ew", padx=10, pady=2)
+        
+        # Inicializar variáveis internas
+        self.processing_thread = None
+        self.stop_requested = False
+        
+        # Carregar arquivos da pasta de entrada, se existirem
+        self.carregar_arquivos_existentes()
+        
+        # Carregar banco de dados padrão, se existir
+        self.carregar_banco_dados_padrao()
+        
+        # Finalização de configurações
+        self.update_file_count()
+        self.redirect_stdout()
+        
+        # Vincular evento de fechamento
+        self.root.protocol("WM_DELETE_WINDOW", self.on_closing)
+        
+        # Atualizar o estado dos botões conforme o estado inicial
+        self.update_button_states()
+        
+        # Mensagem de inicialização
+        print(f"eSocial XML Processor - Iniciado em {datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+        print(f"Diretório base: {BASE_DIR}")
+    
+    def _configurar_tamanho_tela(self):
+        """Configura o tamanho da tela dinamicamente baseado na resolução do monitor"""
+        # Obtém a largura e altura da tela
+        largura_tela = self.root.winfo_screenwidth()
+        altura_tela = self.root.winfo_screenheight()
+        
+        # Define tamanho da janela como 80% da tela
+        largura_janela = int(largura_tela * 0.8)
+        altura_janela = int(altura_tela * 0.8)
+        
+        # Define tamanho mínimo
+        self.root.minsize(800, 600)
+        
+        # Configura o tamanho da janela
+        self.root.geometry(f"{largura_janela}x{altura_janela}")
+        
+        # Centraliza a janela na tela
+        posicao_x = (largura_tela - largura_janela) // 2
+        posicao_y = (altura_tela - altura_janela) // 2
+        self.root.geometry(f"+{posicao_x}+{posicao_y}")
+        
+        print(f"Configurando janela com tamanho: {largura_janela}x{altura_janela}")
+    
+    def setup_config_frame(self):
+        """Configura o frame de configurações"""
+        self.config_frame.columnconfigure(1, weight=1)
+        
+        # Diretório de entrada
+        ttk.Label(self.config_frame, text="Diretório de Entrada:").grid(row=0, column=0, sticky=tk.W, padx=5, pady=5)
+        self.input_dir_var = tk.StringVar(value=str(DEFAULT_PATHS['INPUT_DIR']))
+        input_entry = ttk.Entry(self.config_frame, textvariable=self.input_dir_var)
+        input_entry.grid(row=0, column=1, sticky=(tk.W, tk.E), padx=5, pady=5)
+        self.input_select_button = ttk.Button(self.config_frame, text="Selecionar", 
+                  command=lambda: self.select_directory(self.input_dir_var))
+        self.input_select_button.grid(row=0, column=2, padx=5, pady=5)
+        
+        # Diretório de saída
+        ttk.Label(self.config_frame, text="Diretório de Saída:").grid(row=1, column=0, sticky=tk.W, padx=5, pady=5)
+        self.output_dir_var = tk.StringVar(value=str(DEFAULT_PATHS['OUTPUT_DIR']))
+        output_entry = ttk.Entry(self.config_frame, textvariable=self.output_dir_var)
+        output_entry.grid(row=1, column=1, sticky=(tk.W, tk.E), padx=5, pady=5)
+        self.output_select_button = ttk.Button(self.config_frame, text="Selecionar",
+                  command=lambda: self.select_directory(self.output_dir_var))
+        self.output_select_button.grid(row=1, column=2, padx=5, pady=5)
+        
+        # Diretório de templates
+        ttk.Label(self.config_frame, text="Diretório de Templates:").grid(row=2, column=0, sticky=tk.W, padx=5, pady=5)
+        self.templates_dir_var = tk.StringVar(value=str(DEFAULT_PATHS['TEMPLATES_DIR']))
+        templates_entry = ttk.Entry(self.config_frame, textvariable=self.templates_dir_var)
+        templates_entry.grid(row=2, column=1, sticky=(tk.W, tk.E), padx=5, pady=5)
+        self.templates_select_button = ttk.Button(self.config_frame, text="Selecionar",
+                  command=lambda: self.select_directory(self.templates_dir_var))
+        self.templates_select_button.grid(row=2, column=2, padx=5, pady=5)
+        
+        # Mantemos a variável do banco de dados, mas não exibimos na interface
+        self.db_path_var = tk.StringVar(value=str(DEFAULT_PATHS['DATABASE_DIR'] / "esocial.db"))
+    
+    def setup_file_frame(self):
+        """Configura o frame de arquivos"""
+        # Configuração do grid
+        self.file_frame.rowconfigure(0, weight=1)
+        self.file_frame.rowconfigure(1, weight=0)
+        self.file_frame.columnconfigure(0, weight=1)
+        
+        # Lista de arquivos com scrollbars
+        file_list_frame = ttk.Frame(self.file_frame)
+        file_list_frame.grid(row=0, column=0, sticky="nsew", padx=5, pady=5)
+        
+        file_list_frame.rowconfigure(0, weight=1)
+        file_list_frame.columnconfigure(0, weight=1)
+        
+        self.file_list = tk.Listbox(file_list_frame, selectmode=tk.EXTENDED)
+        self.file_list.grid(row=0, column=0, sticky="nsew")
+        
+        scrollbar_y = ttk.Scrollbar(file_list_frame, orient="vertical", command=self.file_list.yview)
+        scrollbar_y.grid(row=0, column=1, sticky="ns")
+        
+        scrollbar_x = ttk.Scrollbar(file_list_frame, orient="horizontal", command=self.file_list.xview)
+        scrollbar_x.grid(row=1, column=0, sticky="ew")
+        
+        self.file_list.configure(yscrollcommand=scrollbar_y.set, xscrollcommand=scrollbar_x.set)
+        
+        # Botões para gerenciar arquivos
+        file_buttons_frame = ttk.Frame(self.file_frame)
+        file_buttons_frame.grid(row=1, column=0, sticky="ew", padx=5, pady=5)
+        
+        # Armazenar referências aos botões para controle posterior
+        self.add_files_button = ttk.Button(file_buttons_frame, text="Adicionar Arquivos", command=self.add_files)
+        self.add_files_button.pack(side=tk.LEFT, padx=2)
+        
+        self.add_dir_button = ttk.Button(file_buttons_frame, text="Adicionar Pasta", command=self.add_directory)
+        self.add_dir_button.pack(side=tk.LEFT, padx=2)
+        
+        self.clear_files_button = ttk.Button(file_buttons_frame, text="Limpar Lista", command=self.clear_file_list)
+        self.clear_files_button.pack(side=tk.LEFT, padx=2)
+        
+        self.remove_files_button = ttk.Button(file_buttons_frame, text="Remover Selecionados", command=self.remove_selected_files)
+        self.remove_files_button.pack(side=tk.LEFT, padx=2)
+        
+        # Label de contagem
+        self.file_count_var = tk.StringVar(value="0 arquivos")
+        ttk.Label(file_buttons_frame, textvariable=self.file_count_var).pack(side=tk.RIGHT, padx=5)
+    
+    def setup_log_frame(self):
+        """Configura o frame de log"""
+        # Configuração do grid
+        self.log_frame.rowconfigure(0, weight=1)
+        self.log_frame.columnconfigure(0, weight=1)
+        
+        # Widget de texto com rolagem para logs
+        self.log_text = scrolledtext.ScrolledText(self.log_frame, wrap=tk.WORD, state=tk.DISABLED)
+        self.log_text.grid(row=0, column=0, sticky="nsew", padx=5, pady=5)
+        
+        # Configuração de estilos de texto
+        self.log_text.tag_configure("error", foreground="red")
+        self.log_text.tag_configure("warning", foreground="orange")
+        self.log_text.tag_configure("info", foreground="blue")
+        self.log_text.tag_configure("success", foreground="green")
+        self.log_text.tag_configure("debug", foreground="gray")
+    
+    def setup_actions_frame(self):
+        """Configura o frame de ações"""
+        # Renomear para "Operações"
+        self.actions_frame.configure(padding=5)
+        self.actions_label = ttk.Label(self.actions_frame, text="Operações")
+        self.actions_label.pack(side=tk.TOP, anchor=tk.W, pady=(0, 5))
+        
+        # Botões de ação com referências para controle de estados
+        self.process_button = ttk.Button(self.actions_frame, text="Processar XML", 
+                  command=self.start_processing, style='Primary.TButton')
+        self.process_button.pack(side=tk.LEFT, padx=5, pady=5)
+        
+        self.export_button = ttk.Button(self.actions_frame, text="Exportar CSV",
+                  command=self.start_exporting)
+        self.export_button.pack(side=tk.LEFT, padx=5, pady=5)
+        
+        self.view_db_button = ttk.Button(self.actions_frame, text="Ver Banco de Dados",
+                  command=self.show_database_viewer)
+        self.view_db_button.pack(side=tk.LEFT, padx=5, pady=5)
+        
+        self.view_output_button = ttk.Button(self.actions_frame, text="Ver Pasta de Saída",
+                  command=self.open_output_folder)
+        self.view_output_button.pack(side=tk.LEFT, padx=5, pady=5)
+        
+        # Barra de progresso
+        self.progress_var = tk.DoubleVar(value=0.0)
+        self.progress_bar = ttk.Progressbar(self.actions_frame, variable=self.progress_var, mode="determinate")
+        self.progress_bar.pack(side=tk.LEFT, padx=5, pady=5, fill=tk.X, expand=True)
+        
+        # Botão de ajuda
+        self.help_button = ttk.Button(self.actions_frame, text="Sobre", command=self.show_help)
+        self.help_button.pack(side=tk.RIGHT, padx=5, pady=5)
+    
+    def redirect_stdout(self):
+        """Redireciona a saída padrão e de erro para o widget de texto"""
+        sys.stdout = RedirecionadorTextoSimples(self.log_text, log_file)
+        sys.stderr = RedirecionadorTextoSimples(self.log_text, log_file)
+    
+    def select_directory(self, var):
+        """Seleciona um diretório e atualiza a variável"""
+        directory = filedialog.askdirectory(initialdir=var.get())
+        if directory:
+            var.set(directory)
+    
+    def select_database(self):
+        """Seleciona um arquivo de banco de dados SQLite"""
+        # Gera um nome de banco com timestamp
+        timestamp = datetime.datetime.now().strftime('%Y%m%d_%H%M%S')
+        default_db_name = f"esocial_{timestamp}.db"
+        default_dir = os.path.dirname(self.db_path_var.get())
+        
+        # Define o caminho completo padrão
+        default_path = os.path.join(default_dir, default_db_name)
+        
+        db_file = filedialog.asksaveasfilename(
+            initialdir=default_dir,
+            initialfile=default_db_name,
+            defaultextension=".db",
+            filetypes=[("SQLite Database", "*.db"), ("All Files", "*.*")],
+            title="Selecionar ou Criar Banco de Dados SQLite"
+        )
+        
+        if db_file:
+            self.db_path_var.set(db_file)
+            print(f"Banco de dados selecionado: {db_file}")
+    
+    def add_files(self):
+        """Adiciona arquivos XML à lista"""
+        filepaths = filedialog.askopenfilenames(
+            title="Selecionar Arquivos XML",
+            initialdir=self.input_dir_var.get(),
+            filetypes=[("Arquivos XML", "*.xml"), ("Todos os Arquivos", "*.*")]
+        )
+        
+        if not filepaths:
+            return
+        
+        # Copiar arquivos para o diretório de entrada e adicionar à lista
+        for filepath in filepaths:
+            filename = os.path.basename(filepath)
+            # Verificar se o arquivo já está na lista
+            if filename not in [self.file_list.get(i) for i in range(self.file_list.size())]:
+                self.file_list.insert(tk.END, filename)
+                
+                # Copiar para o diretório de entrada se necessário
+                dest_path = Path(self.input_dir_var.get()) / filename
+                if Path(filepath) != dest_path:
+                    try:
+                        shutil.copy2(filepath, str(dest_path))
+                    except Exception as e:
+                        print(f"Erro ao copiar arquivo {filename}: {e}")
+        
+        self.update_file_count()
+    
+    def add_directory(self):
+        """Adiciona todos os arquivos XML de um diretório"""
+        directory = filedialog.askdirectory(
+            title="Selecionar Diretório com Arquivos XML",
+            initialdir=self.input_dir_var.get()
+        )
+        
+        if not directory:
+            return
+        
+        # Encontrar todos os arquivos XML no diretório
+        xml_files = [f for f in os.listdir(directory) if f.lower().endswith('.xml')]
+        
+        # Adicionar à lista e copiar para o diretório de entrada
+        for filename in xml_files:
+            if filename not in [self.file_list.get(i) for i in range(self.file_list.size())]:
+                self.file_list.insert(tk.END, filename)
+                
+                # Copiar para o diretório de entrada se necessário
+                src_path = os.path.join(directory, filename)
+                dest_path = Path(self.input_dir_var.get()) / filename
+                if Path(src_path) != dest_path:
+                    try:
+                        shutil.copy2(src_path, str(dest_path))
+                    except Exception as e:
+                        print(f"Erro ao copiar arquivo {filename}: {e}")
+        
+        self.update_file_count()
+    
+    def clear_file_list(self):
+        """Limpa a lista de arquivos"""
+        if messagebox.askyesno("Confirmar Limpeza", "Deseja limpar a lista de arquivos?"):
+            self.file_list.delete(0, tk.END)
+            self.update_file_count()
+    
+    def remove_selected_files(self):
+        """Remove os arquivos selecionados da lista"""
+        selected = self.file_list.curselection()
+        if not selected:
+            return
+            
+        if messagebox.askyesno("Confirmar Remoção", "Remover os arquivos selecionados da lista?"):
+            # Remover os itens de trás para frente para preservar os índices
+            for i in sorted(selected, reverse=True):
+                self.file_list.delete(i)
+            
+            self.update_file_count()
+    
+    def update_file_count(self):
+        """Atualiza o contador de arquivos"""
+        count = self.file_list.size()
+        self.file_count_var.set(f"{count} {'arquivo' if count == 1 else 'arquivos'}")
+    
+    def clear_log(self):
+        """Limpa o log"""
+        self.log_text.config(state=tk.NORMAL)
+        self.log_text.delete(1.0, tk.END)
+        self.log_text.config(state=tk.DISABLED)
+    
+    def show_help(self):
+        """Exibe a ajuda"""
+        help_text = """
+        Exportador de XMLs do eSocial
+        
+        Este programa permite processar arquivos XML do eSocial, armazenar seus dados 
+        em um banco SQLite e exportá-los para arquivos de saída conforme templates.
+        
+        Passos para uso:
+        
+        1. Configure os diretórios de entrada e saída.
+        2. Adicione arquivos XML para processamento.
+        3. Clique em "Processar XML" para importar os dados para o banco.
+        4. Clique em "Exportar CSV" para gerar os arquivos de saída conforme templates.
+        5. Use "Ver Banco de Dados" para visualizar os dados importados.
+        6. Use "Ver Pasta de Saída" para abrir o explorador de arquivos na pasta de saída.
+        
+        Dicas:
+        - Os logs de processamento são salvos no diretório "logs".
+        - O banco de dados original é preservado durante o processamento.
+        - Backups dos arquivos de saída são criados antes de cada exportação.
+        
+        Para mais informações, consulte a documentação do projeto.
+        
+        Silver Sistemas
+        """
+        
+        help_window = tk.Toplevel(self.root)
+        help_window.title("Ajuda")
+        help_window.geometry("600x400")
+        
+        help_text_widget = scrolledtext.ScrolledText(help_window, wrap=tk.WORD)
+        help_text_widget.pack(fill=tk.BOTH, expand=True, padx=10, pady=10)
+        help_text_widget.insert(tk.END, help_text)
+        help_text_widget.config(state=tk.DISABLED)
+    
+    def start_processing(self):
+        """Inicia o processamento dos arquivos XML"""
+        if self.processing_thread and self.processing_thread.is_alive():
+            messagebox.showwarning("Processamento em Andamento", 
+                                 "Já existe um processamento em andamento. Aguarde a conclusão ou interrompa.")
+            return
+        
+        input_dir = self.input_dir_var.get()
+        output_dir = self.output_dir_var.get()
+        templates_dir = self.templates_dir_var.get()
+        
+        # Verificar se há arquivos para processar
+        if self.file_list.size() == 0:
+            messagebox.showwarning("Sem Arquivos", "Nenhum arquivo XML adicionado para processamento.")
+            return
+        
+        # Verificar diretórios
+        if not os.path.isdir(input_dir):
+            messagebox.showerror("Erro", f"Diretório de entrada inválido: {input_dir}")
+            return
+            
+        if not os.path.isdir(output_dir):
+            messagebox.showerror("Erro", f"Diretório de saída inválido: {output_dir}")
+            return
+            
+        if not os.path.isdir(templates_dir):
+            messagebox.showerror("Erro", f"Diretório de templates inválido: {templates_dir}")
+            return
+        
+        # Verificar mapeamentos completos dos templates
+        try:
+            from src.configuracao.configuracoes import Configuracoes
+            from src.banco_dados.gerenciador_banco_dados import GerenciadorBancoDados
+            from src.exportadores.exportador_templates_empresa import ExportadorTemplatesEmpresa
+            
+            # Inicializar configurações para verificação
+            configuracoes = Configuracoes()
+            configuracoes.CAMINHO_BANCO = Path(self.db_path_var.get())
+            configuracoes.CAMINHO_SAIDA = Path(output_dir)
+            configuracoes.CAMINHO_TEMPLATES = Path(templates_dir)
+            
+            # Verificar mapeamentos antes de iniciar o processamento
+            gerenciador_bd = GerenciadorBancoDados(configuracoes.CAMINHO_BANCO)
+            exportador = ExportadorTemplatesEmpresa(gerenciador_bd, configuracoes)
+            
+            print("Verificando mapeamentos dos templates antes de iniciar processamento...")
+            if not exportador.verificar_mapeamentos_completos():
+                if not messagebox.askyesno("Mapeamentos Incompletos", 
+                                         "Alguns campos dos templates não estão mapeados. Deseja continuar mesmo assim?"):
+                    return
+                print("Usuário optou por continuar mesmo com mapeamentos incompletos.")
+            else:
+                print("✓ Todos os mapeamentos estão completos!")
+                
+        except Exception as e:
+            print(f"Erro ao verificar mapeamentos: {e}")
+            if not messagebox.askyesno("Erro na verificação", 
+                                     f"Erro ao verificar mapeamentos: {str(e)}\n\nDeseja continuar mesmo assim?"):
+                return
+            
+        # Usar o banco de dados padrão (esocial.db) ao invés de criar um com timestamp
+        db_dir = DEFAULT_PATHS['DATABASE_DIR']
+        db_path = str(db_dir / "esocial.db")
+        self.db_path_var.set(db_path)
+        print(f"Usando banco de dados padrão para este processamento: {db_path}")
+        
+        # Criar diretório do banco de dados se não existir
+        os.makedirs(os.path.dirname(db_path), exist_ok=True)
+        
+        # Limpar arquivos anteriores (com backup)
+        self.cleanup_before_processing(db_path)
+        
+        # Resetar flag de parada
+        self.stop_requested = False
+        
+        # Atualizar estado da aplicação para "processing"
+        self.current_state = "processing"
+        self.update_button_states()
+        
+        # Iniciar thread de processamento
+        self.processing_thread = threading.Thread(
+            target=self.run_processing,
+            args=(input_dir, db_path),
+            daemon=True
+        )
+        self.processing_thread.start()
+        
+        # Atualizar interface
+        self.status_var.set("Processando arquivos XML...")
+        self.progress_var.set(0)
+    
+    def start_exporting(self):
+        """Inicia a exportação para CSV"""
+        if self.processing_thread and self.processing_thread.is_alive():
+            messagebox.showwarning("Processamento em Andamento", 
+                                 "Já existe um processamento em andamento. Aguarde a conclusão ou interrompa.")
+            return
+        
+        db_path = self.db_path_var.get()
+        output_dir = self.output_dir_var.get()
+        templates_dir = self.templates_dir_var.get()
+        
+        # Verificar diretórios
+        if not os.path.isdir(output_dir):
+            messagebox.showerror("Erro", f"Diretório de saída inválido: {output_dir}")
+            return
+            
+        if not os.path.isdir(templates_dir):
+            messagebox.showerror("Erro", f"Diretório de templates inválido: {templates_dir}")
+            return
+            
+        if not os.path.isfile(db_path):
+            messagebox.showerror("Erro", f"Banco de dados não encontrado: {db_path}")
+            return
+        
+        # Limpar arquivos de saída anteriores
+        self.cleanup_before_processing(db_path, output_dir)
+        
+        # Resetar flag de parada
+        self.stop_requested = False
+        
+        # Atualizar estado da aplicação para "exporting"
+        self.current_state = "exporting"
+        self.update_button_states()
+        
+        # Iniciar thread de exportação
+        self.processing_thread = threading.Thread(
+            target=self.run_exporting,
+            args=(db_path, output_dir, templates_dir),
+            daemon=True
+        )
+        self.processing_thread.start()
+        
+        # Atualizar interface
+        self.status_var.set("Exportando...")
+        self.progress_var.set(0)
+    
+    def stop_processing(self):
+        """Interrompe o processamento"""
+        if self.processing_thread and self.processing_thread.is_alive():
+            if messagebox.askyesno("Confirmar Parada", 
+                                "Interromper o processamento atual? Esta operação pode deixar dados incompletos."):
+                self.stop_requested = True
+                self.status_var.set("Interrompendo processamento...")
+                print("Solicitação de interrupção enviada. Aguardando finalização...")
+        else:
+            messagebox.showinfo("Informação", "Não há processamento em andamento.")
+    
+    def run_processing(self, input_dir, db_path):
+        """Executa o processamento de arquivos XML em uma thread separada"""
+        try:
+            from src.configuracao.configuracoes import Configuracoes
+            from src.banco_dados.gerenciador_banco_dados import GerenciadorBancoDados
+            from src.processadores.processador_xml import ProcessadorXML
+            
+            # Configurar logger avançado para suprimir mensagens de erro repetitivas
+            if LOGGER_AVANCADO_DISPONIVEL:
+                # Função para enviar logs para a interface gráfica
+                def gui_output_func(msg, level):
+                    # Suprimir erros excessivos para não sobrecarregar a UI
+                    if level >= logging.ERROR:
+                        # Limitamos a exibição de erros na UI
+                        return
+                    print(msg)
+                
+                # Usar logger avançado com filtragem de erros
+                logger = configurar_logger(
+                    nivel="INFO",
+                    diretorio_logs=Path("logs"),
+                    gui_output_func=gui_output_func,
+                    filtrar_duplicados=True
+                )
+                logger.info(f"eSocial XML Processor - Iniciado em {datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+                logger.info(f"Diretório base: {BASE_DIR}")
+            
+            print(f"Iniciando processamento de arquivos XML em {input_dir}")
+            print(f"Banco de dados: {db_path}")
+            
+            # Inicializar configurações
+            configuracoes = Configuracoes()
+            configuracoes.CAMINHO_BANCO = Path(db_path)
+            configuracoes.CAMINHO_ENTRADA = Path(input_dir)
+            
+            # Inicializar gerenciador de banco de dados
+            gerenciador_bd = GerenciadorBancoDados(configuracoes.CAMINHO_BANCO)
+            
+            # Limpar dados antes de iniciar um novo processamento para evitar duplicações
+            sucesso_limpeza = gerenciador_bd.limpar_dados_para_processamento()
+            if not sucesso_limpeza:
+                print("⚠️ Aviso: Falha ao limpar dados antigos. O processamento continuará, mas pode haver duplicação de registros.")
+            
+            # Inicializar processador XML
+            processador_xml = ProcessadorXML(gerenciador_bd, configuracoes)
+            
+            # Obter a lista de arquivos para processar
+            files = [self.file_list.get(i) for i in range(self.file_list.size())]
+            total_files = len(files)
+            
+            for i, filename in enumerate(files):
+                # Verificar se foi solicitada parada
+                if self.stop_requested:
+                    print("Processamento interrompido pelo usuário.")
+                    # Atualizar estado para inicial se interrompido
+                    self.root.after(0, lambda: setattr(self, 'current_state', 'initial'))
+                    self.root.after(0, self.update_button_states)
+                    break
+                
+                filepath = os.path.join(input_dir, filename)
+                print(f"Processando arquivo {i+1}/{total_files}: {filename}")
+                
+                try:
+                    processador_xml.processar_arquivo(filepath)
+                    print(f"Arquivo {filename} processado com sucesso!")
+                except Exception as e:
+                    print(f"Erro ao processar arquivo {filename}: {e}")
+                
+                # Atualizar barra de progresso
+                progress = ((i + 1) / total_files) * 100
+                self.progress_var.set(progress)
+                
+                # Atualizar status
+                self.status_var.set(f"Processando: {i+1}/{total_files} ({int(progress)}%)")
+                
+            # Se não foi solicitada parada, atualizar estado para "processed"
+            if not self.stop_requested:
+                print("Processamento concluído!")
+                self.status_var.set("Processamento concluído!")
+                # Usar after para atualizar estado de forma segura na thread principal
+                self.root.after(0, lambda: setattr(self, 'current_state', 'processed'))
+                self.root.after(0, self.update_button_states)
+            
+        except Exception as e:
+            print(f"Erro durante o processamento: {e}")
+            self.status_var.set(f"Erro: {str(e)[:50]}...")
+            # Em caso de erro, voltar ao estado inicial
+            self.root.after(0, lambda: setattr(self, 'current_state', 'initial'))
+            self.root.after(0, self.update_button_states)
+        finally:
+            # Garantir que a barra de progresso esteja completa ou zerada
+            if self.stop_requested:
+                self.progress_var.set(0)
+            else:
+                self.progress_var.set(100)
+    
+    def run_exporting(self, db_path, output_dir, templates_dir):
+        """Executa a exportação em uma thread separada"""
+        try:
+            from src.configuracao.configuracoes import Configuracoes
+            from src.banco_dados.gerenciador_banco_dados import GerenciadorBancoDados
+            from src.exportadores.exportador_templates_empresa import ExportadorTemplatesEmpresa
+            
+            print(f"Iniciando exportação em {output_dir}")
+            print(f"Usando templates de {templates_dir}")
+            print(f"Banco de dados: {db_path}")
+            
+            # Verificar se o banco de dados existe
+            if not Path(db_path).exists():
+                print(f"⚠️ Banco de dados não encontrado: {db_path}")
+                self.status_var.set("Erro: Banco de dados não encontrado")
+                # Voltar ao estado anterior em caso de erro
+                self.root.after(0, lambda: setattr(self, 'current_state', 'processed'))
+                self.root.after(0, self.update_button_states)
+                return
+            
+            # Inicializar configurações
+            configuracoes = Configuracoes()
+            configuracoes.CAMINHO_BANCO = Path(db_path)
+            configuracoes.CAMINHO_SAIDA = Path(output_dir)
+            configuracoes.CAMINHO_TEMPLATES = Path(templates_dir)
+            
+            # Inicializar gerenciador de banco de dados
+            gerenciador_bd = GerenciadorBancoDados(configuracoes.CAMINHO_BANCO)
+            
+            # Verificar se há tabelas no banco
+            tabelas = gerenciador_bd.obter_tabelas()
+            print(f"Tabelas disponíveis no banco: {tabelas}")
+            if not tabelas:
+                print(f"⚠️ Não há tabelas no banco de dados. Exporte não terá dados.")
+                self.status_var.set("Erro: Banco de dados vazio")
+                # Voltar ao estado anterior em caso de erro
+                self.root.after(0, lambda: setattr(self, 'current_state', 'processed'))
+                self.root.after(0, self.update_button_states)
+                return
+            
+            # Verificar se há dados nas tabelas principais
+            tabelas_principais = ['esocial_s2200', 'esocial_s2205', 'esocial_s2230', 'esocial_s1200']
+            for tabela in tabelas_principais:
+                if tabela in tabelas:
+                    count_query = f"SELECT COUNT(*) as total FROM {tabela}"
+                    resultado = gerenciador_bd.executar_query(count_query)
+                    if resultado and resultado[0]['total'] > 0:
+                        print(f"✅ Tabela {tabela}: {resultado[0]['total']} registros encontrados")
+                    else:
+                        print(f"⚠️ Tabela {tabela}: Nenhum registro encontrado")
+            
+            # Exportar apenas os 9 CSVs da Empresa
+            print("Exportando...")
+            exportador_empresa = ExportadorTemplatesEmpresa(gerenciador_bd, configuracoes)
+            empresa_count = exportador_empresa.exportar_todos_templates()
+            print(f"Exportação concluída! {empresa_count} templates processados.")
+            
+            # Verificar diretório de saída 
+            arquivos_gerados = list(Path(output_dir).glob('**/*.csv'))
+            print(f"Total de arquivos gerados: {len(arquivos_gerados)}")
+            for arquivo in arquivos_gerados[:9]:  # Mostrar os 9 arquivos
+                print(f"  - {arquivo.name}")
+                
+            # Resumo da exportação
+            print(f"\n===== RESUMO DA EXPORTAÇÃO =====")
+            print(f"Templates Atuais: {empresa_count}")
+            print(f"Arquivos gerados: {len(arquivos_gerados)}")
+            print(f"===== FIM DO RESUMO =====\n")
+            
+            self.status_var.set(f"Exportação concluída! {len(arquivos_gerados)} arquivos gerados.")
+            
+            # Se não solicitou parada, atualizar para estado "exported"
+            if not self.stop_requested:
+                # Usar after para atualizar estado de forma segura na thread principal
+                self.root.after(0, lambda: setattr(self, 'current_state', 'exported'))
+                self.root.after(0, self.update_button_states)
+            
+        except Exception as e:
+            print(f"Erro durante a exportação: {e}")
+            import traceback
+            traceback.print_exc()
+            self.status_var.set(f"Erro: {str(e)[:50]}...")
+            # Em caso de erro, voltar ao estado anterior
+            self.root.after(0, lambda: setattr(self, 'current_state', 'processed'))
+            self.root.after(0, self.update_button_states)
+        finally:
+            # Garantir que a barra de progresso esteja completa ou zerada
+            if self.stop_requested:
+                self.progress_var.set(0)
+            else:
+                self.progress_var.set(100)
+    
+    def show_database_viewer(self):
+        """Abre janela para visualização das tabelas do banco de dados"""
+        import sqlite3
+        
+        db_path = self.db_path_var.get()
+        
+        # Verificar se o banco de dados existe
+        if not os.path.exists(db_path):
+            messagebox.showwarning("Aviso", 
+                "Banco de dados não encontrado. Execute um processamento primeiro.")
+            print("AVISO: Banco de dados não encontrado.")
+            return
+        
+        try:
+            # Conectar ao banco
+            conn = sqlite3.connect(db_path)
+            cursor = conn.cursor()
+            
+            # Obter lista de tabelas
+            cursor.execute("SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%'")
+            tables = [table[0] for table in cursor.fetchall()]
+            
+            if not tables:
+                messagebox.showinfo("Informação", "Nenhuma tabela encontrada no banco de dados.")
+                conn.close()
+                return
+            
+            print(f"Abrindo visualizador de banco de dados com {len(tables)} tabelas")
+            
+            # Criar janela do visualizador
+            viewer_window = tk.Toplevel(self.root)
+            viewer_window.title("Visualizador de Banco de Dados - eSocial")
+            viewer_window.geometry("1000x700")
+            viewer_window.minsize(800, 600)
+            
+            # Configurar grid principal
+            viewer_window.rowconfigure(0, weight=0)  # toolbar
+            viewer_window.rowconfigure(1, weight=1)  # notebook
+            viewer_window.rowconfigure(2, weight=0)  # status
+            viewer_window.columnconfigure(0, weight=1)
+            
+            # Frame de ferramentas
+            toolbar_frame = ttk.Frame(viewer_window)
+            toolbar_frame.grid(row=0, column=0, sticky="ew", padx=10, pady=5)
+            
+            ttk.Label(toolbar_frame, text="Banco de Dados:", font=("Arial", 10, "bold")).pack(side=tk.LEFT, padx=5)
+            ttk.Label(toolbar_frame, text=os.path.basename(db_path)).pack(side=tk.LEFT, padx=5)
+            
+            # Botão de atualização
+            ttk.Button(toolbar_frame, text="Atualizar Dados", 
+                      command=lambda: self.refresh_database_viewer(notebook, tables, conn)).pack(side=tk.RIGHT, padx=5)
+            
+            # Notebook para as tabelas
+            notebook = ttk.Notebook(viewer_window)
+            notebook.grid(row=1, column=0, sticky="nsew", padx=10, pady=5)
+            
+            # Barra de status - será atualizada pelo método create_database_tabs
+            status_var = tk.StringVar(value=f"Banco de dados conectado")
+            status_bar = ttk.Label(viewer_window, textvariable=status_var, relief=tk.SUNKEN, anchor=tk.W)
+            status_bar.grid(row=2, column=0, sticky="ew", padx=10, pady=2)
+            
+            # Criar abas para cada tabela
+            self.create_database_tabs(notebook, tables, conn, status_var)
+            
+            # Configurar fechamento da janela
+            def on_viewer_close():
+                try:
+                    conn.close()
+                    print("Conexão com banco de dados fechada.")
+                except:
+                    pass
+                viewer_window.destroy()
+            
+            viewer_window.protocol("WM_DELETE_WINDOW", on_viewer_close)
+            
+            print("Visualizador de banco de dados aberto com sucesso.")
+            
+        except sqlite3.Error as e:
+            messagebox.showerror("Erro de Banco de Dados", f"Erro ao acessar o banco: {str(e)}")
+            print(f"ERRO DB: {str(e)}")
+        except Exception as e:
+            messagebox.showerror("Erro", f"Erro ao abrir visualizador: {str(e)}")
+            print(f"ERRO: {str(e)}")
+
+    def create_database_tabs(self, notebook, tables, conn, status_var):
+        """Cria abas para cada tabela do banco de dados"""
+        cursor = conn.cursor()
+        
+        # Tabelas que devem ser excluídas da visualização
+        tabelas_excluidas = ['esocial_s1000', 'esocial_s2299']
+        tabelas_filtradas = [t for t in tables if t not in tabelas_excluidas]
+        
+        # Atualizar contador de tabelas na interface
+        total_tabelas = len(tabelas_filtradas)
+        status_var.set(f"Banco de dados conectado - {total_tabelas} tabelas exibidas")
+        
+        for table_name in sorted(tabelas_filtradas):
+            try:
+                # Obter informações da tabela
+                cursor.execute(f"PRAGMA table_info({table_name})")
+                columns_info = cursor.fetchall()
+                columns = [col[1] for col in columns_info]  # Nome das colunas
+                
+                # Contar registros
+                cursor.execute(f"SELECT COUNT(*) FROM {table_name}")
+                total_records = cursor.fetchone()[0]
+                
+                # Criar frame da aba
+                tab_frame = ttk.Frame(notebook)
+                notebook.add(tab_frame, text=f"{table_name} ({total_records})")
+                
+                # Configurar grid da aba
+                tab_frame.rowconfigure(0, weight=1)  # tabela (removido controle de busca)
+                tab_frame.columnconfigure(0, weight=1)
+                
+                # Frame da tabela
+                table_frame = ttk.Frame(tab_frame)
+                table_frame.grid(row=0, column=0, sticky="nsew", padx=5, pady=5)
+                table_frame.rowconfigure(0, weight=1)
+                table_frame.columnconfigure(0, weight=1)
+                
+                # Criar Treeview
+                tree = ttk.Treeview(table_frame, columns=columns, show="headings", selectmode="browse")
+                tree.grid(row=0, column=0, sticky="nsew")
+                
+                # Barras de rolagem
+                v_scrollbar = ttk.Scrollbar(table_frame, orient="vertical", command=tree.yview)
+                v_scrollbar.grid(row=0, column=1, sticky="ns")
+                h_scrollbar = ttk.Scrollbar(table_frame, orient="horizontal", command=tree.xview)
+                h_scrollbar.grid(row=1, column=0, sticky="ew")
+                
+                tree.configure(yscrollcommand=v_scrollbar.set, xscrollcommand=h_scrollbar.set)
+                
+                # Configurar colunas
+                for col in columns:
+                    tree.heading(col, text=col.upper())
+                    tree.column(col, width=120, minwidth=80)
+                
+                # Carregar dados (limitados a 100 registros)
+                self.load_table_data(tree, table_name, columns, conn, limit=100)
+                
+            except Exception as e:
+                print(f"Erro ao configurar aba para tabela {table_name}: {e}")
+    
+    def load_table_data(self, tree, table_name, columns, conn, limit=100):
+        """Carrega dados de uma tabela no Treeview"""
+        try:
+            # Limpar dados atuais
+            tree.delete(*tree.get_children())
+            
+            # Executar consulta
+            cursor = conn.cursor()
+            cursor.execute(f"SELECT * FROM {table_name} LIMIT {limit}")
+            rows = cursor.fetchall()
+            
+            # Inserir resultados
+            for i, row in enumerate(rows):
+                tree.insert("", tk.END, values=row)
+        except Exception as e:
+            print(f"Erro ao carregar dados da tabela {table_name}: {e}")
+
+    def refresh_database_viewer(self, notebook, tables, conn):
+        """Atualiza os dados do visualizador de banco"""
+        try:
+            # Salvar aba atual selecionada
+            current_tab = notebook.index(notebook.select())
+            
+            # Limpar todas as abas
+            for tab in notebook.tabs():
+                notebook.forget(tab)
+            
+            # Obter lista atual de tabelas
+            cursor = conn.cursor()
+            cursor.execute("SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%'")
+            updated_tables = [table[0] for table in cursor.fetchall()]
+            
+            # Criar novas abas (as tabelas excluídas serão filtradas no create_database_tabs)
+            status_var = tk.StringVar(value=f"Banco de dados atualizado")
+            self.create_database_tabs(notebook, updated_tables, conn, status_var)
+            
+            # Restaurar seleção de aba se possível
+            if len(notebook.tabs()) > current_tab:
+                notebook.select(current_tab)
+                
+            print("Visualizador de banco de dados atualizado")
+            
+        except Exception as e:
+            print(f"Erro ao atualizar visualizador de banco: {e}")
+            messagebox.showerror("Erro", f"Erro ao atualizar visualizador: {str(e)}")
+    
+    def on_closing(self):
+        """Confirma saída quando há processamento em execução"""
+        if self.processing_thread and self.processing_thread.is_alive():
+            if messagebox.askyesno("Confirmar Saída", "Um processamento está em execução. Encerrar mesmo assim?"):
+                print("Encerrando aplicação durante processamento...")
+                # Marca pedido de encerramento
+                self.stop_requested = True
+                # Remover o arquivo esocial.db ao fechar
+                self._remover_banco_dados()
+                # Restaura stdout e stderr originais
+                sys.stdout = sys.__stdout__
+                sys.stderr = sys.__stderr__
+                # Encerra a aplicação
+                self.root.destroy()
+        else:
+            print("Encerrando aplicação...")
+            # Remover o arquivo esocial.db ao fechar
+            self._remover_banco_dados()
+            # Restaura stdout e stderr originais
+            sys.stdout = sys.__stdout__
+            sys.stderr = sys.__stderr__
+            # Encerra a aplicação
+            self.root.destroy()
+    
+    def _remover_banco_dados(self):
+        """Remove o arquivo esocial.db ao finalizar a aplicação"""
+        try:
+            db_path = DEFAULT_PATHS['DATABASE_DIR'] / "esocial.db"
+            if db_path.exists():
+                os.remove(db_path)
+                print(f"✅ Banco de dados removido: {db_path}")
+        except Exception as e:
+            print(f"❌ Erro ao remover banco de dados: {e}")
+
+    def carregar_arquivos_existentes(self):
+        """Carrega arquivos XML existentes na pasta de entrada"""
+        try:
+            input_dir = self.input_dir_var.get()
+            if os.path.isdir(input_dir):
+                # Encontrar todos os arquivos XML no diretório
+                xml_files = [f for f in os.listdir(input_dir) if f.lower().endswith('.xml')]
+                
+                # Adicionar à lista
+                for filename in xml_files:
+                    self.file_list.insert(tk.END, filename)
+                
+                self.update_file_count()
+                
+                if xml_files:
+                    print(f"Carregados {len(xml_files)} arquivos XML da pasta de entrada")
+        except Exception as e:
+            print(f"Erro ao carregar arquivos existentes: {e}")
+    
+    def carregar_banco_dados_padrao(self):
+        """Carrega o banco de dados padrão esocial.db se existir"""
+        try:
+            # Verificar se existe o banco de dados padrão
+            db_path_padrao = DEFAULT_PATHS['DATABASE_DIR'] / "esocial.db"
+            if db_path_padrao.exists():
+                self.db_path_var.set(str(db_path_padrao))
+                print(f"Banco de dados padrão carregado: {db_path_padrao}")
+                
+                # Verificar tabelas no banco
+                import sqlite3
+                try:
+                    conn = sqlite3.connect(str(db_path_padrao))
+                    cursor = conn.cursor()
+                    cursor.execute("SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%'")
+                    tables = [table[0] for table in cursor.fetchall()]
+                    conn.close()
+                    
+                    if tables:
+                        print(f"Banco de dados contém {len(tables)} tabelas: {', '.join(tables)}")
+                except sqlite3.Error as e:
+                    print(f"Aviso: Banco de dados encontrado, mas não foi possível verificar as tabelas: {e}")
+        except Exception as e:
+            print(f"Erro ao carregar banco de dados padrão: {e}")
+    
+    def cleanup_before_processing(self, db_path, output_dir=None):
+        """Limpa arquivos anteriores antes de iniciar processamento"""
+        try:
+            # Verificar se o banco existe
+            db_path_obj = Path(db_path)
+            if db_path_obj.exists():
+                # NÃO fazer backup nem excluir o banco original para preservar os dados
+                print(f"ℹ️ Banco de dados existente será mantido para processamento")
+            
+            # 2. Limpar diretório de saída se especificado
+            if output_dir and os.path.isdir(output_dir):
+                # Verificar se diretório tem arquivos
+                files = os.listdir(output_dir)
+                if files:
+                    # Remover arquivos do diretório de saída diretamente sem criar backup
+                    for file in files:
+                        file_path = Path(output_dir) / file
+                        if file_path.is_file():  # Só remover arquivos, não diretórios
+                            os.remove(file_path)
+                    
+                    print(f"🗑️ Diretório de saída limpo para nova exportação")
+            
+            return True
+        
+        except Exception as e:
+            print(f"❌ Erro durante limpeza de arquivos anteriores: {e}")
+            return False
+            
+    def open_output_folder(self):
+        """Abre a pasta de saída no explorador de arquivos"""
+        output_dir = self.output_dir_var.get()
+        
+        if not os.path.isdir(output_dir):
+            messagebox.showwarning("Aviso", 
+                f"O diretório de saída não existe: {output_dir}\n\nCrie o diretório ou execute uma exportação primeiro.")
+            return
+            
+        try:
+            # Abrir a pasta no explorador de arquivos do sistema operacional
+            print(f"Abrindo pasta de saída: {output_dir}")
+            
+            if sys.platform == 'win32':
+                os.startfile(output_dir)
+            elif sys.platform == 'darwin':  # macOS
+                subprocess.Popen(['open', output_dir])
+            else:  # Linux e outros
+                subprocess.Popen(['xdg-open', output_dir])
+                
+            self.status_var.set(f"Pasta de saída aberta: {output_dir}")
+            
+        except Exception as e:
+            messagebox.showerror("Erro", f"Não foi possível abrir a pasta: {str(e)}")
+            print(f"Erro ao abrir pasta de saída: {e}")
+            self.status_var.set("Erro ao abrir pasta de saída")
+    
+    def update_button_states(self):
+        """Atualiza o estado dos botões conforme o estado atual da aplicação"""
+        # Desabilitar todos os botões de ação primeiro
+        self.process_button.config(state=tk.DISABLED, style='TButton')  # Reset para estilo normal
+        self.export_button.config(state=tk.DISABLED, style='TButton')   # Reset para estilo normal
+        self.view_db_button.config(state=tk.DISABLED)
+        self.view_output_button.config(state=tk.DISABLED)
+        self.help_button.config(state=tk.DISABLED)
+        
+        # Desabilitar botões de gerenciamento de arquivos
+        self.add_files_button.config(state=tk.DISABLED)
+        self.add_dir_button.config(state=tk.DISABLED)
+        self.clear_files_button.config(state=tk.DISABLED)
+        self.remove_files_button.config(state=tk.DISABLED)
+        
+        # Desabilitar botões de configuração
+        self.input_select_button.config(state=tk.DISABLED)
+        self.output_select_button.config(state=tk.DISABLED)
+        self.templates_select_button.config(state=tk.DISABLED)
+        
+        # Habilitar botões conforme o estado
+        if self.current_state == "initial":
+            # Estado inicial: permitir seleção de pastas, gerenciamento de arquivos e processamento 
+            self.process_button.config(state=tk.NORMAL, style='Primary.TButton')  # Botão inicial em destaque
+            self.help_button.config(state=tk.NORMAL)
+            
+            # Habilitar botões de gerenciamento de arquivos
+            self.add_files_button.config(state=tk.NORMAL)
+            self.add_dir_button.config(state=tk.NORMAL)
+            self.clear_files_button.config(state=tk.NORMAL)
+            self.remove_files_button.config(state=tk.NORMAL)
+            
+            # Habilitar botões de configuração
+            self.input_select_button.config(state=tk.NORMAL)
+            self.output_select_button.config(state=tk.NORMAL)
+            self.templates_select_button.config(state=tk.NORMAL)
+            
+        elif self.current_state == "processing" or self.current_state == "exporting":
+            # Estado de processamento: nenhum botão habilitado
+            self.help_button.config(state=tk.NORMAL)
+            
+        elif self.current_state == "processed":
+            # Processamento concluído: exportação e visualização habilitados
+            self.export_button.config(state=tk.NORMAL, style='Primary.TButton')  # Destacar botão de exportação
+            self.view_db_button.config(state=tk.NORMAL)
+            self.help_button.config(state=tk.NORMAL)
+            
+        elif self.current_state == "exported":
+            # Exportação concluída: apenas visualização permitida
+            self.view_db_button.config(state=tk.NORMAL)
+            self.view_output_button.config(state=tk.NORMAL)
+            self.help_button.config(state=tk.NORMAL)
+            
+        # Atualizar a interface
+        self.root.update_idletasks()
+    
+def main():
+    """Função principal"""
+    # Configurar logging antes de inicializar a GUI
+    logging.basicConfig(
+        level=logging.INFO,
+        format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+        handlers=[
+            logging.FileHandler(log_file, encoding='utf-8'),
+            logging.StreamHandler()  # Para debug no console
+        ]
+    )
+    
+    root = tk.Tk()
+    # Configurar tema ttk (usar ttkthemes se estiver disponível)
+    try:
+        from ttkthemes import ThemedStyle
+        style = ThemedStyle(root)
+        style.set_theme("clearlooks")  # ou outro tema disponível
+    except ImportError:
+        style = ttk.Style()
+        if sys.platform.startswith('win'):
+            style.theme_use('vista')
+        elif sys.platform.startswith('darwin'):
+            style.theme_use('aqua')
+        else:
+            style.theme_use('clam')
+    
+    # Criar um estilo para botões primários
+    style.configure('Primary.TButton', font=('Helvetica', 10, 'bold'))
+    
+    # Instanciar a aplicação
+    app = EsocialMigrationGUI(root)
+    
+    # Iniciar o loop principal
+    root.mainloop()
+
+
+if __name__ == "__main__":
+    main()

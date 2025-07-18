@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<eSocial xmlns="http://www.esocial.gov.br/schema/evt/evtInfoEmpregador/v_S_01_00_00">
+    <evtInfoEmpregador Id="ID1234567890">
+        <ideEvento>
+            <tpAmb>1</tpAmb>
+            <procEmi>1</procEmi>
+            <verProc>1.0</verProc>
+        </ideEvento>
+        <ideEmpregador>
+            <tpInsc>1</tpInsc>
+            <nrInsc>12345678901234</nrInsc>
+        </ideEmpregador>
+        <infoEmpregador>
+            <inclusao>
+                <idePeriodo>
+                    <iniValid>2025-06</iniValid>
+                </idePeriodo>
+                <infoCadastro>
+                    <nmRazao>Empresa Teste LTDA</nmRazao>
+                    <classTrib>01</classTrib>
+                    <natJurid>2062</natJurid>
+                    <indCoop>0</indCoop>
+                    <indConstr>0</indConstr>
+                    <indDesFolha>0</indDesFolha>
+                    <indOptRegEletron>0</indOptRegEletron>
+                    <indEntEd>N</indEntEd>
+                    <contato>
+                        <nmCtt>Contato Teste</nmCtt>
+                        <cpfCtt>12345678901</cpfCtt>
+                        <foneFixo>1122334455</foneFixo>
+                        <email>teste@empresa.com</email>
+                    </contato>
+                </infoCadastro>
+            </inclusao>
+        </infoEmpregador>
+    </evtInfoEmpregador>
+</eSocial>

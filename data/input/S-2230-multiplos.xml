@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<eSocial xmlns="http://www.esocial.gov.br/schema/evt/evtAfastTemp/v_S_01_00_00">
+    <evtAfastTemp Id="ID1234567890">
+        <ideEvento><indRetif>1</indRetif><tpAmb>1</tpAmb><procEmi>1</procEmi><verProc>1.0</verProc></ideEvento>
+        <ideEmpregador><tpInsc>1</tpInsc><nrInsc>12345678901234</nrInsc></ideEmpregador>
+        <ideTrabalhador><cpfTrab>12345678901</cpfTrab><nisTrab>12345678901</nisTrab></ideTrabalhador>
+        <infoAfastamento><iniAfastamento><dtIniAfast>2025-06-01</dtIniAfast><codMotAfast>01</codMotAfast><infoAtestado><codCID>A00</codCID><qtdDiasAfast>10</qtdDiasAfast><emitente><nmEmit>Dr. José Médico</nmEmit><ideOC>1</ideOC><nrOC>12345</nrOC><ufOC>SP</ufOC></emitente></infoAtestado></iniAfastamento><fimAfastamento><dtTermAfast>2025-06-10</dtTermAfast></fimAfastamento></infoAfastamento>
+    </evtAfastTemp>
+    <evtAfastTemp Id="ID2234567890">
+        <ideEvento><indRetif>1</indRetif><tpAmb>1</tpAmb><procEmi>1</procEmi><verProc>1.0</verProc></ideEvento>
+        <ideEmpregador><tpInsc>1</tpInsc><nrInsc>22345678901234</nrInsc></ideEmpregador>
+        <ideTrabalhador><cpfTrab>22345678901</cpfTrab><nisTrab>22345678901</nisTrab></ideTrabalhador>
+        <infoAfastamento><iniAfastamento><dtIniAfast>2025-07-01</dtIniAfast><codMotAfast>02</codMotAfast><infoAtestado><codCID>B00</codCID><qtdDiasAfast>5</qtdDiasAfast><emitente><nmEmit>Dr. Maria Médica</nmEmit><ideOC>2</ideOC><nrOC>54321</nrOC><ufOC>RJ</ufOC></emitente></infoAtestado></iniAfastamento><fimAfastamento><dtTermAfast>2025-07-06</dtTermAfast></fimAfastamento></infoAfastamento>
+    </evtAfastTemp>
+    <evtAfastTemp Id="ID3234567890">
+        <ideEvento><indRetif>1</indRetif><tpAmb>1</tpAmb><procEmi>1</procEmi><verProc>1.0</verProc></ideEvento>
+        <ideEmpregador><tpInsc>1</tpInsc><nrInsc>32345678901234</nrInsc></ideEmpregador>
+        <ideTrabalhador><cpfTrab>32345678901</cpfTrab><nisTrab>32345678901</nisTrab></ideTrabalhador>
+        <infoAfastamento><iniAfastamento><dtIniAfast>2025-08-01</dtIniAfast><codMotAfast>03</codMotAfast><infoAtestado><codCID>C00</codCID><qtdDiasAfast>7</qtdDiasAfast><emitente><nmEmit>Dr. João Médico</nmEmit><ideOC>3</ideOC><nrOC>67890</nrOC><ufOC>MG</ufOC></emitente></infoAtestado></iniAfastamento><fimAfastamento><dtTermAfast>2025-08-08</dtTermAfast></fimAfastamento></infoAfastamento>
+    </evtAfastTemp>
+</eSocial> 

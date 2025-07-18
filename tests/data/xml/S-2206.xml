@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<eSocial xmlns="http://www.esocial.gov.br/schema/evt/evtAltContratual/v_S_01_00_00">
+    <evtAltContratual Id="ID1234567890">
+        <ideEvento>
+            <indRetif>1</indRetif>
+            <tpAmb>1</tpAmb>
+            <procEmi>1</procEmi>
+            <verProc>1.0</verProc>
+        </ideEvento>
+        <ideEmpregador>
+            <tpInsc>1</tpInsc>
+            <nrInsc>12345678901234</nrInsc>
+        </ideEmpregador>
+        <ideTrabalhador>
+            <cpfTrab>12345678901</cpfTrab>
+            <nisTrab>12345678901</nisTrab>
+        </ideTrabalhador>
+        <altContratual>
+            <dtAlteracao>2025-06-09</dtAlteracao>
+            <vinculo>
+                <tpRegTrab>1</tpRegTrab>
+                <tpRegPrev>1</tpRegPrev>
+            </vinculo>
+            <infoContrato>
+                <codCargo>GERENTE01</codCargo>
+                <codCateg>101</codCateg>
+                <remuneracao>
+                    <vrSalFx>7000.00</vrSalFx>
+                    <undSalFixo>5</undSalFixo>
+                </remuneracao>
+                <duracao>
+                    <tpContr>1</tpContr>
+                </duracao>
+                <localTrabalho>
+                    <localTrabGeral>
+                        <tpInsc>1</tpInsc>
+                        <nrInsc>12345678901234</nrInsc>
+                        <descComp>Sede da Empresa</descComp>
+                    </localTrabGeral>
+                </localTrabalho>
+                <horContratual>
+                    <qtdHrsSem>44.0</qtdHrsSem>
+                    <tpJornada>1</tpJornada>
+                </horContratual>
+            </infoContrato>
+        </altContratual>
+    </evtAltContratual>
+</eSocial>

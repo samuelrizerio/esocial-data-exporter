@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<eSocial xmlns="http://www.esocial.gov.br/schema/evt/evtAltCadastral/v_S_01_00_00">
+    <evtAltCadastral Id="ID1234567890">
+        <ideEvento>
+            <indRetif>1</indRetif>
+            <tpAmb>1</tpAmb>
+            <procEmi>1</procEmi>
+            <verProc>1.0</verProc>
+        </ideEvento>
+        <ideEmpregador>
+            <tpInsc>1</tpInsc>
+            <nrInsc>12345678901234</nrInsc>
+        </ideEmpregador>
+        <ideTrabalhador>
+            <cpfTrab>12345678901</cpfTrab>
+            <nisTrab>12345678901</nisTrab>
+        </ideTrabalhador>
+        <alteracao>
+            <dtAlteracao>2025-06-09</dtAlteracao>
+            <dadosTrabalhador>
+                <nmTrab>João da Silva Santos</nmTrab>
+                <sexo>M</sexo>
+                <racaCor>1</racaCor>
+                <estCiv>2</estCiv>
+                <grauInstr>10</grauInstr>
+                <nascimento>
+                    <dtNascto>1990-01-01</dtNascto>
+                    <paisNascto>010</paisNascto>
+                    <paisNac>010</paisNac>
+                </nascimento>
+                <endereco>
+                    <brasil>
+                        <tpLograd>R</tpLograd>
+                        <dscLograd>Avenida Paulista</dscLograd>
+                        <nrLograd>2000</nrLograd>
+                        <bairro>Bela Vista</bairro>
+                        <cep>01310100</cep>
+                        <codMunic>3550308</codMunic>
+                        <uf>SP</uf>
+                    </brasil>
+                </endereco>
+                <contato>
+                    <fonePrinc>1199998888</fonePrinc>
+                    <emailPrinc>joao.silva@example.com</emailPrinc>
+                </contato>
+            </dadosTrabalhador>
+        </alteracao>
+    </evtAltCadastral>
+</eSocial>

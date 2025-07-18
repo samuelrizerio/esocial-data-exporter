@@ -1,0 +1,29 @@
+<eSocial>
+  <evtS1000>
+    <ideEmpregador>
+      <tpInsc>1</tpInsc>
+      <nrInsc>12345678000195</nrInsc>
+    </ideEmpregador>
+    <infoEmpregador>
+      <ideEvento>
+        <indRetif>1</indRetif>
+        <nrRecibo>1</nrRecibo>
+        <tpAmb>1</tpAmb>
+        <procEmi>1</procEmi>
+        <verProc>1.0</verProc>
+      </ideEvento>
+    </infoEmpregador>
+  <!-- Tag malformada abaixo -->
+  <evtS1000>
+    <ideEmpregador>
+      <tpInsc>1</tpInsc>
+      <nrInsc>98765432000199</nrInsc>
+    </ideEmpregador>
+    <infoEmpregador>
+      <ideEvento>
+        <indRetif>1</indRetif>
+        <nrRecibo>2</nrRecibo>
+        <tpAmb>1</tpAmb>
+        <procEmi>1</procEmi>
+        <verProc>1.0</verProc>
+      <!-- Fim abrupto -->

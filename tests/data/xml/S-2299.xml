@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<eSocial xmlns="http://www.esocial.gov.br/schema/evt/evtDesligamento/v_S_01_00_00">
+    <evtDesligamento Id="ID1234567890">
+        <ideEvento>
+            <indRetif>1</indRetif>
+            <tpAmb>1</tpAmb>
+            <procEmi>1</procEmi>
+            <verProc>1.0</verProc>
+        </ideEvento>
+        <ideEmpregador>
+            <tpInsc>1</tpInsc>
+            <nrInsc>12345678901234</nrInsc>
+        </ideEmpregador>
+        <ideVinculo>
+            <cpfTrab>12345678901</cpfTrab>
+            <matricula>12345</matricula>
+        </ideVinculo>
+        <infoDeslig>
+            <dtDeslig>2025-06-30</dtDeslig>
+            <mtvDeslig>02</mtvDeslig>
+        </infoDeslig>
+    </evtDesligamento>
+</eSocial>

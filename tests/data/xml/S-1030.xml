@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<eSocial xmlns="http://www.esocial.gov.br/schema/evt/evtTabCargo/v_S_01_00_00">
+    <evtTabCargo Id="ID1234567890">
+        <ideEvento>
+            <tpAmb>1</tpAmb>
+            <procEmi>1</procEmi>
+            <verProc>1.0</verProc>
+        </ideEvento>
+        <ideEmpregador>
+            <tpInsc>1</tpInsc>
+            <nrInsc>12345678901234</nrInsc>
+        </ideEmpregador>
+        <infoCargo>
+            <inclusao>
+                <ideCargo>
+                    <codCargo>ANALISTA01</codCargo>
+                    <iniValid>2025-01</iniValid>
+                </ideCargo>
+                <dadosCargo>
+                    <nmCargo>Analista de Sistemas</nmCargo>
+                    <codCBO>212405</codCBO>
+                    <cargoPublico>N</cargoPublico>
+                </dadosCargo>
+            </inclusao>
+        </infoCargo>
+    </evtTabCargo>
+</eSocial>

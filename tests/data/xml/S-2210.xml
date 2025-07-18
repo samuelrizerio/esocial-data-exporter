@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<eSocial xmlns="http://www.esocial.gov.br/schema/evt/evtCAT/v_S_01_00_00">
+    <evtCAT Id="ID1234567890">
+        <ideEvento>
+            <indRetif>1</indRetif>
+            <tpAmb>1</tpAmb>
+            <procEmi>1</procEmi>
+            <verProc>1.0</verProc>
+        </ideEvento>
+        <ideEmpregador>
+            <tpInsc>1</tpInsc>
+            <nrInsc>12345678901234</nrInsc>
+        </ideEmpregador>
+        <ideTrabalhador>
+            <cpfTrab>12345678901</cpfTrab>
+            <nisTrab>12345678901</nisTrab>
+        </ideTrabalhador>
+        <cat>
+            <dtAcid>2025-06-01</dtAcid>
+            <tpAcid>1</tpAcid>
+            <hrAcid>09:00</hrAcid>
+            <hrsTrabAntesAcid>1</hrsTrabAntesAcid>
+            <tpCat>1</tpCat>
+            <indCatObito>N</indCatObito>
+            <indComunPolicia>S</indComunPolicia>
+            <localAcidente>
+                <tpLocal>1</tpLocal>
+                <dscLocal>Ambiente interno da empresa</dscLocal>
+                <tpLograd>R</tpLograd>
+                <dscLograd>Avenida Brasil</dscLograd>
+                <nrLograd>1000</nrLograd>
+                <bairro>Centro</bairro>
+                <cep>12345678</cep>
+                <codMunic>3550308</codMunic>
+                <uf>SP</uf>
+                <paisAcid>010</paisAcid>
+            </localAcidente>
+            <parteAtingida>
+                <codParteAting>753030000</codParteAting>
+            </parteAtingida>
+            <agenteCausador>
+                <codAgntCausador>303010300</codAgntCausador>
+            </agenteCausador>
+            <atestado>
+                <codCNES>1234567</codCNES>
+                <dtAtendimento>2025-06-01</dtAtendimento>
+                <hrAtendimento>09:30</hrAtendimento>
+                <indInternacao>N</indInternacao>
+                <durTrat>10</durTrat>
+                <indAfast>S</indAfast>
+                <dscLesao>S723</dscLesao>
+                <dscCompLesao>Fratura do osso do braço</dscCompLesao>
+                <diagProvavel>Fratura</diagProvavel>
+                <codCID>S42</codCID>
+                <observacao>Paciente em observação</observacao>
+                <emitente>
+                    <nmEmit>Dr. José Médico</nmEmit>
+                    <ideOC>1</ideOC>
+                    <nrOC>12345</nrOC>
+                    <ufOC>SP</ufOC>
+                </emitente>
+            </atestado>
+        </cat>
+    </evtCAT>
+</eSocial>

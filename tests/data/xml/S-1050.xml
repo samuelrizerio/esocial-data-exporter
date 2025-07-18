@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<eSocial xmlns="http://www.esocial.gov.br/schema/evt/evtTabHorTur/v_S_01_00_00">
+    <evtTabHorTur Id="ID1234567890">
+        <ideEvento>
+            <tpAmb>1</tpAmb>
+            <procEmi>1</procEmi>
+            <verProc>1.0</verProc>
+        </ideEvento>
+        <ideEmpregador>
+            <tpInsc>1</tpInsc>
+            <nrInsc>12345678901234</nrInsc>
+        </ideEmpregador>
+        <infoHorContratual>
+            <inclusao>
+                <ideHorContratual>
+                    <codHorContrat>HORCOM01</codHorContrat>
+                    <iniValid>2025-01</iniValid>
+                </ideHorContratual>
+                <dadosHorContratual>
+                    <hrEntrada>08:00</hrEntrada>
+                    <hrSaida>17:00</hrSaida>
+                    <durJornada>480</durJornada>
+                    <perHorFlexivel>N</perHorFlexivel>
+                </dadosHorContratual>
+            </inclusao>
+        </infoHorContratual>
+    </evtTabHorTur>
+</eSocial>

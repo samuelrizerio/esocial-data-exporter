@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<eSocial xmlns="http://www.esocial.gov.br/schema/evt/evtAfastTemp/v_S_01_00_00">
+    <evtAfastTemp Id="ID1234567890">
+        <ideEvento>
+            <indRetif>1</indRetif>
+            <tpAmb>1</tpAmb>
+            <procEmi>1</procEmi>
+            <verProc>1.0</verProc>
+        </ideEvento>
+        <ideEmpregador>
+            <tpInsc>1</tpInsc>
+            <nrInsc>12345678901234</nrInsc>
+        </ideEmpregador>
+        <ideVinculo>
+            <cpfTrab>12345678901</cpfTrab>
+            <nisTrab>12345678901</nisTrab>
+            <matricula>0001</matricula>
+        </ideVinculo>
+        <infoAfastamento>
+            <dtIniAfast>2025-06-01</dtIniAfast>
+            <codMotAfast>01</codMotAfast>
+            <infoMesmoMtv>
+                <indAfast>N</indAfast>
+            </infoMesmoMtv>
+            <tpAcidTransito>0</tpAcidTransito>
+            <observacao>Observações sobre o afastamento</observacao>
+            <perAquis>
+                <dtInicio>2025-01-01</dtInicio>
+                <dtFim>2025-12-31</dtFim>
+            </perAquis>
+            <infoCessao>
+                <dtIniCessao>2025-06-01</dtIniCessao>
+                <dtTermCessao>2025-06-10</dtTermCessao>
+            </infoCessao>
+            <infoMandElet>
+                <dtIniMand>2025-06-01</dtIniMand>
+                <dtFimMand>2025-06-10</dtFimMand>
+                <justProrr>Justificativa para prorrogação</justProrr>
+            </infoMandElet>
+            <infoRetif>
+                <origRetif>1</origRetif>
+                <tpProc>1</tpProc>
+                <nrProc>12345678901234567890</nrProc>
+                <descRetif>Descrição da retificação</descRetif>
+            </infoRetif>
+            <infoFech>
+                <evtRemun>N</evtRemun>
+                <evtPgtos>N</evtPgtos>
+                <evtAqProd>N</evtAqProd>
+                <evtComProd>N</evtComProd>
+                <evtContratAvNP>N</evtContratAvNP>
+                <evtInfoComplPer>N</evtInfoComplPer>
+                <compSemMovto>2025-06</compSemMovto>
+            </infoFech>
+        </infoAfastamento>
+    </evtAfastTemp>
+</eSocial> 
